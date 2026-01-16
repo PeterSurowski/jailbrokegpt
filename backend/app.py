@@ -32,8 +32,11 @@ model_loader = ModelLoader(MODEL_REPO, MODEL_FILE)
 try:
     model_loader.load_model()
 except Exception as e:
+    import traceback
     print(f"Error loading model: {e}")
-    print("Server will start but model needs to be loaded manually")
+    print("\nFull error details:")
+    traceback.print_exc()
+    print("\nServer will start but model needs to be loaded manually")
 
 
 @app.route('/health', methods=['GET'])
@@ -101,13 +104,18 @@ def model_info():
 
 
 if __name__ == '__main__':
-    print(f"\n🚀 JailbrokeGPT Backend running on http://{FLASK_HOST}:{FLASK_PORT}")
-    print(f"📦 Model: {MODEL_REPO}")
-    print(f"💬 Chat endpoint: http://localhost:{FLASK_PORT}/chat")
-    print("\nPress CTRL+C to stop the server\n")
+    print("\n" + "="*50)
+    print("JailbrokeGPT Backend Server")
+    print("="*50)
+    print(f"Running on: http://{FLASK_HOST}:{FLASK_PORT}")
+    print(f"Model: {MODEL_REPO}")
+    print(f"Chat endpoint: http://localhost:{FLASK_PORT}/chat")
+    print("Press CTRL+C to stop the server")
+    print("="*50 + "\n")
     
     app.run(
         host=FLASK_HOST,
         port=FLASK_PORT,
-        debug=True
+        debug=False,
+        use_reloader=False
     )
