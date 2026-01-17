@@ -1,6 +1,6 @@
 # JailbrokeGPT
 
-An uncensored AI chat interface powered by TinyLlama, built with Flask and React.
+An uncensored AI chat interface powered by Dolphin-2.9.4-Llama3.1-8B, built with Flask and React.
 
 ## Tech Stack
 
@@ -81,18 +81,20 @@ Frontend will run on `http://localhost:5173`
 
 ## Model Information
 
-Currently using: **UNCENSORED-TinyLlama-1.1B** (GGUF format)
-- Model: v8karlo/UNCENSORED-TinyLlama-1.1B-intermediate-step-1431k-3T-Q5_K_M-GGUF
-- Size: ~1.5GB
-- RAM Required: 2-3GB
+Currently using: **Dolphin-2.9.4-Llama3.1-8B** (GGUF format)
+- Model: bartowski/dolphin-2.9.4-llama3.1-8b-GGUF (Q4_K_S quantization)
+- Size: 4.69GB
+- RAM Required: ~7-8GB
 - CPU optimized via llama.cpp
+- Uncensored fine-tune ideal for coding assistance
 
 ### Upgrading to Larger Models
 
-When you upgrade your server RAM to 16GB, simply change the model name in `backend/.env`:
+When you upgrade your server RAM, you can swap models by editing `backend/.env`:
 
-```
-MODEL_NAME=darkc0de/XortronCriminalComputingConfig
+```env
+MODEL_REPO=your-model-repo/model-name
+MODEL_FILE=model-file.gguf
 ```
 
 ## Deployment

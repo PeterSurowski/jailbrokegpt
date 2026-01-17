@@ -39,12 +39,12 @@ class ModelLoader:
         print(f"Model downloaded to: {model_path}")
         return model_path
     
-    def load_model(self, n_ctx: int = 2048, n_threads: int = 4) -> Llama:
+    def load_model(self, n_ctx: int = 512, n_threads: int = 4) -> Llama:
         """
         Load the model into memory
         
         Args:
-            n_ctx: Context window size (default 2048)
+            n_ctx: Context window size (default 512, reduced from 2048 for RAM)
             n_threads: Number of CPU threads to use (default 4)
             
         Returns:
@@ -58,7 +58,7 @@ class ModelLoader:
             n_ctx=n_ctx,
             n_threads=n_threads,
             n_gpu_layers=0,  # CPU only (change to -1 for GPU)
-            verbose=False
+            verbose=True  # Enable to see loading details
         )
         
         print("Model loaded successfully!")
