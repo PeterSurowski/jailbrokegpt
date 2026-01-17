@@ -21,7 +21,7 @@ function App() {
       
       <footer className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 py-2 px-6 text-center">
         <p className="text-xs text-gray-500">
-          Powered by TinyLlama (Uncensored) • Running on local hardware
+          Built by Peter Surowski | Copyright 2026
         </p>
       </footer>
     </div>
