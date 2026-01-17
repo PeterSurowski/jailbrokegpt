@@ -1,17 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Message, { MessageProps } from './Message';
-import { sendChatMessage } from '../api/chat';
 
-const ChatInterface: React.FC = () => {
-  const [messages, setMessages] = useState<MessageProps[]>([
-    {
-      role: 'assistant',
-      content: 'Hello! I\'m JailbrokeGPT, an uncensored AI assistant. How can I help you today?',
-      timestamp: new Date()
-    }
-  ]);
+interface ChatInterfaceProps {
+  conversationId: number | null;
+  onConversationCreated: (id: number) => void;
+}
+
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, onConversationCreated }) => {
+  const [messages, setMessages] = useState<MessageProps[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,6 +20,73 @@ const ChatInterface: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (conversationId) {
+      loadConversation(conversationId);
+    } else {
+      setMessages([{
+        role: 'assistant',
+        content: 'Hello! I\'m JailbrokeGPT, an uncensored AI assistant. How can I help you today?',
+        timestamp: new Date()
+      }]);
+    }
+  }, [conversationId]);
+
+  const loadConversation = async (id: number) => {
+    setLoadingMessages(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/conversations/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load conversation');
+      }
+
+      const data = await response.json();
+      const loadedMessages: MessageProps[] = data.conversation.messages.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp)
+      }));
+
+      setMessages(loadedMessages);
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      alert('Failed to load conversation');
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const createConversation = async (): Promise<number | null> => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: 'New Chat' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create conversation');
+      }
+
+      const data = await response.json();
+      return data.conversation.id;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,15 +104,42 @@ const ChatInterface: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await sendChatMessage({ 
-        prompt: userMessage.content,
-        max_tokens: 512,
-        temperature: 0.7
+      let currentConvId = conversationId;
+      
+      // Create conversation if doesn't exist
+      if (!currentConvId) {
+        currentConvId = await createConversation();
+        if (currentConvId) {
+          onConversationCreated(currentConvId);
+        } else {
+          throw new Error('Failed to create conversation');
+        }
+      }
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          prompt: userMessage.content,
+          conversation_id: currentConvId,
+          max_tokens: 512,
+          temperature: 0.7
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
 
       const assistantMessage: MessageProps = {
         role: 'assistant',
-        content: response.response,
+        content: data.response,
         timestamp: new Date()
       };
 
@@ -56,7 +149,7 @@ const ChatInterface: React.FC = () => {
       
       const errorMessage: MessageProps = {
         role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request. Please make sure the backend server is running.',
+        content: 'Sorry, I encountered an error processing your request. Please make sure the backend server is running and you\'re logged in.',
         timestamp: new Date()
       };
 
@@ -73,8 +166,16 @@ const ChatInterface: React.FC = () => {
     }
   };
 
+  if (loadingMessages) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-gray-400">Loading conversation...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] bg-gray-900">
+    <div className="flex flex-col h-screen bg-gray-900">
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
         {messages.map((message, index) => (
